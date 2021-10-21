@@ -1,5 +1,6 @@
 import vlc
 import logging
+import discid
 
 logger = logging.getLogger(__name__)
 
@@ -57,14 +58,18 @@ class MediaPlayer:
         self.__mediaListPlayer__.set_media_player(self.__player__)
 
         self.__media__ = vlc.Media(path)
-        self.__media__.parse_with_options(vlc.MediaParseFlag.do_interact, 0)
+        # self.__media__.parse_with_options(vlc.MediaParseFlag.do_interact, 0)
 
         self.__mediaList__.add_media(self.__media__)
 
         self.__mediaListPlayer__.set_media_list(self.__mediaList__)
 
         self.__eventManager__ = self.__player__.event_manager()
-        self.__eventManager__.event_attach(vlc.EventType.MediaParsedChanged, self.__getDiscInformation__)
+        # self.__eventManager__.event_attach(vlc.EventType.MediaParsedChanged, self.__getDiscInformation__)
+
+        disc = discid.read(device = path)
+
+        logger.info(f"disc id: {disc.id}")
 
 
     def __getDiscInformation__(self):

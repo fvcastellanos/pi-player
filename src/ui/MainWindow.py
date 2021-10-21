@@ -3,12 +3,11 @@ from player.MediaPlayer import MediaPlayer
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 class MainWindow:
 
     __window__: Tk
     __player__: MediaPlayer
+    logger = logging.getLogger(__name__)
 
     def __init__(self, player: MediaPlayer, title = "Application", geometry = "400x300"):
         
@@ -28,7 +27,7 @@ class MainWindow:
 
     def __onClose__(self):
 
-        logger.info("Close window instance")
+        self.logger.info("Close window instance")
 
         self.__player__.stop()
         self.__window__.destroy()
@@ -57,17 +56,17 @@ class MainWindow:
 
     def __buildInformation__(self, frame: Frame):
 
-        logger.info("Start building Information controls")
+        self.logger.info("Start building Information controls")
         Label(frame, text = f"Current track:").grid(row = 1, column = 2)
 
 
     def __buildDisplay__(self, frame: Frame):
 
-        logger.info("Start building display controls")
+        self.logger.info("Start building display controls")
 
     def __buildControls__(self):
 
-        logger.info("Start building UI")
+        self.logger.info("Start building UI")
 
         topFrame = Frame(self.__window__, height = 30)
         topFrame.pack(fill = BOTH, side = TOP, expand = True)
@@ -111,4 +110,4 @@ class MainWindow:
 
         Label(bottomFrame, text = "Pi Player v 1.0").place(x = 10, y = 10)
 
-        logger.info("UI built")
+        self.logger.info("UI built")
