@@ -67,7 +67,8 @@ class MediaPlayer:
         self.__eventManager__ = self.__player__.event_manager()
         # self.__eventManager__.event_attach(vlc.EventType.MediaParsedChanged, self.__getDiscInformation__)
 
-        disc = discid.read(device = path)
+        discDevice = path[7:]
+        disc = discid.read(device = discDevice)
 
         logger.info(f"disc id: {disc.id}")
 
