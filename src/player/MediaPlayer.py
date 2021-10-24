@@ -2,84 +2,112 @@ import vlc
 import logging
 import discid
 
+from player.AudioDisc import AudioDisc
+from player.Track import Track
+
 logger = logging.getLogger(__name__)
 
 class MediaPlayer:
 
-    __player__ : vlc.MediaPlayer
-    __mediaList__ : vlc.MediaList
-    __mediaListPlayer__ : vlc.MediaListPlayer
-    __eventManager__: vlc.EventManager
-    __media__: vlc.Media
+    __mediaPath: str
+    __player : vlc.MediaPlayer
+    __mediaList : vlc.MediaList
+    __mediaListPlayer : vlc.MediaListPlayer
+    __eventManager: vlc.EventManager
+    __media: vlc.Media
+
+    audioDisc: AudioDisc
 
     def __init__(self, path = "cdda:///dev/sr0"):
 
-        self.__loadDisk__(path)
+        self.__mediaPath = path
+        self.audioDisc = None
+
+        self.__createMediaPlayer()
 
     def play(self):
 
         logger.info("Play track")
-        self.__mediaListPlayer__.play()
-        # self.__getDiscInformation__()
+        self.__mediaListPlayer.play()
     
     def stop(self):
 
         logger.info("Stop track")
-        self.__mediaListPlayer__.stop()
+
+        if self.__mediaListPlayer.is_playing():
+            self.__mediaListPlayer.stop()
 
     def pause(self):
 
         logger.info("Pause track")
-        self.__mediaListPlayer__.pause()
+        self.__mediaListPlayer.pause()
 
     def next(self):
 
         logger.info("Next track")
-        self.__mediaListPlayer__.next()
+        self.__mediaListPlayer.next()
 
     def prev(self):
 
         logger.info("Previous track")
-        self.__mediaListPlayer__.previous()
+        self.__mediaListPlayer.previous()
+
+    def loadDisk(self):
+
+        logger.info("Load disc")
+        self.__loadDisk(self.__mediaPath)
 
     # ----------------------------------------------------------------------
 
-    def __loadDisk__(self, path: str):
+    def __loadDisk(self, path: str):
 
         logger.info(f"Load media player resource: {path}")
 
+
+        self.__getDiscInformation(path)
+
+        if (self.audioDisc != None):
+
+            for track in self.audioDisc.tracks:
+                
+                self.__media = vlc.Media(path, (track.playerName))
+                self.__mediaList.add_media(self.__media)
+
+            self.__mediaListPlayer.set_media_list(self.__mediaList)
+
+            self.__eventManager = self.__player.event_manager()
+            # self.__eventManager__.event_attach(vlc.EventType.MediaParsedChanged, self.__getDiscInformation__)
+            # self.__eventManager.event_attach(vlc.EventType.MediaPlayerTimeChanged, self.__mediaPlayerTimeChanged)
+            
+    def __mediaPlayerTimeChanged(self, event):
+
+        logger.info(f"time changed: {event}")
+
+    def __getDiscInformation(self, path: str):
+
+        try:
+            discDevice = path[7:]
+            disc : discid.Disc = discid.read(device = discDevice)
+
+            logger.info(f"disc id: {disc.id}")
+
+            tracks = [Track(name = track.number, duration = track.seconds) for track in disc.tracks]
+            self.audioDisc = AudioDisc(id = disc.id, tracks =  tracks)
+        
+        except Exception as exception:
+
+            logger.exception("Unable to load disc information", exception)
+
+    def __createMediaPlayer(self): 
+
         vlcInstance = vlc.Instance()
+        self.__player = vlcInstance.media_player_new()
 
-        self.__player__ = vlcInstance.media_player_new()
+        self.__mediaList = vlcInstance.media_list_new()
 
-        self.__mediaList__ = vlcInstance.media_list_new()
+        self.__mediaListPlayer = vlcInstance.media_list_player_new()
+        self.__mediaListPlayer.set_media_player(self.__player)
 
-        self.__mediaListPlayer__ = vlcInstance.media_list_player_new()
-        self.__mediaListPlayer__.set_media_player(self.__player__)
-
-        self.__media__ = vlc.Media(path)
-        # self.__media__.parse_with_options(vlc.MediaParseFlag.do_interact, 0)
-
-        self.__mediaList__.add_media(self.__media__)
-
-        self.__mediaListPlayer__.set_media_list(self.__mediaList__)
-
-        self.__eventManager__ = self.__player__.event_manager()
-        # self.__eventManager__.event_attach(vlc.EventType.MediaParsedChanged, self.__getDiscInformation__)
-
-        discDevice = path[7:]
-        disc = discid.read(device = discDevice)
-
-        logger.info(f"disc id: {disc.id}")
-
-
-    def __getDiscInformation__(self):
-
-        logger.info("Media information retrieved")
-
-        media = self.__player__.get_media()
-
-        logger.info(f"media: {media.tracks_get()}")
 
         
         
